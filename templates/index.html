@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Useless Achievement Generator</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, Helvetica, sans-serif;
+            background:
+                radial-gradient(circle at top left, #4c1d95, transparent 35%),
+                radial-gradient(circle at bottom right, #be185d, transparent 35%),
+                #09090b;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header .emoji {
+            font-size: 60px;
+        }
+
+        h1 {
+            font-size: clamp(36px, 7vw, 70px);
+            margin: 10px 0;
+            line-height: 0.95;
+            letter-spacing: -3px;
+        }
+
+        .subtitle {
+            color: #a1a1aa;
+            font-size: 18px;
+        }
+
+        .panel {
+            background: rgba(24, 24, 27, 0.85);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 30px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 25px 80px rgba(0,0,0,0.45);
+        }
+
+        .input-area {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        input {
+            flex: 1;
+            padding: 17px 20px;
+            border-radius: 14px;
+            border: 1px solid #3f3f46;
+            background: #18181b;
+            color: white;
+            font-size: 16px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #a855f7;
+        }
+
+        button {
+            border: none;
+            cursor: pointer;
+            border-radius: 14px;
+            padding: 16px 25px;
+            font-weight: bold;
+            font-size: 16px;
+            color: white;
+            background: linear-gradient(135deg, #9333ea, #ec4899);
+            transition: 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(236,72,153,0.25);
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        .achievement {
+            display: none;
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+            padding: 35px;
+            background:
+                linear-gradient(135deg,
+                    rgba(168,85,247,0.22),
+                    rgba(236,72,153,0.12)),
+                #18181b;
+            border: 1px solid rgba(168,85,247,0.35);
+        }
+
+        .achievement.show {
+            display: block;
+            animation: appear 0.5s ease;
+        }
+
+        @keyframes appear {
+            from {
+                opacity: 0;
+                transform: translateY(15px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .badge {
+            font-size: 70px;
+            margin-bottom: 10px;
+        }
+
+        .earned {
+            color: #a1a1aa;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .person {
+            font-size: 20px;
+            margin: 8px 0 25px;
+            color: #d4d4d8;
+        }
+
+        .title {
+            font-size: clamp(28px, 5vw, 48px);
+            margin: 0 0 12px;
+        }
+
+        .description {
+            color: #d4d4d8;
+            font-size: 18px;
+            line-height: 1.6;
+            max-width: 700px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .pill {
+            padding: 9px 14px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.08);
+            color: #e4e4e7;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .rarity-common {
+            color: #d4d4d8;
+        }
+
+        .rarity-rare {
+            color: #60a5fa;
+        }
+
+        .rarity-epic {
+            color: #c084fc;
+        }
+
+        .rarity-legendary {
+            color: #facc15;
+        }
+
+        .actions {
+            margin-top: 25px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .secondary {
+            background: #27272a;
+            color: #e4e4e7;
+        }
+
+        .secondary:hover {
+            box-shadow: none;
+            background: #3f3f46;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #71717a;
+            font-size: 13px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #a1a1aa;
+            padding: 20px;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 15px;
+            }
+
+            .panel {
+                padding: 20px;
+            }
+
+            .input-area {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .achievement {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <div class="emoji">🏆</div>
+
+        <h1>Useless Achievement Generator</h1>
+
+        <p class="subtitle">
+            Because not everything you do needs to be useful.
+        </p>
+    </div>
+
+    <div class="panel">
+
+        <div class="input-area">
+
+            <input
+                id="nameInput"
+                type="text"
+                maxlength="40"
+                placeholder="Enter your name..."
+            >
+
+            <button onclick="generateAchievement()">
+                Generate 🪄
+            </button>
+
+        </div>
+
+        <div id="loading" class="loading">
+            Calculating your extremely important achievement...
+        </div>
+
+        <div id="achievement" class="achievement">
+
+            <div class="badge">🏆</div>
+
+            <div class="earned">
+                Achievement Unlocked
+            </div>
+
+            <div id="person" class="person"></div>
+
+            <h2 id="title" class="title"></h2>
+
+            <p id="description" class="description"></p>
+
+            <div class="stats">
+
+                <div id="rarity" class="pill"></div>
+
+                <div id="xp" class="pill"></div>
+
+            </div>
+
+            <div class="actions">
+
+                <button onclick="generateAchievement()">
+                    🔄 Get Another
+                </button>
+
+                <button
+                    class="secondary"
+                    onclick="copyAchievement()"
+                >
+                    📋 Copy
+                </button>
+
+                <button
+                    class="secondary"
+                    onclick="shareAchievement()"
+                >
+                    🚀 Share
+                </button>
+
+            </div>
+
+        </div>
+
+        <div class="footer">
+            100% useless. 0% regret.
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+async function generateAchievement() {
+
+    const nameInput = document.getElementById("nameInput");
+    const achievement = document.getElementById("achievement");
+    const loading = document.getElementById("loading");
+
+    const name = nameInput.value.trim();
+
+    achievement.classList.remove("show");
+    loading.style.display = "block";
+
+    try {
+
+        const response = await fetch("/generate", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                name: name
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error("Generation failed");
+        }
+
+        const data = await response.json();
+
+        document.getElementById("person").textContent =
+            "Awarded to " + data.name;
+
+        document.getElementById("title").textContent =
+            data.title;
+
+        document.getElementById("description").textContent =
+            data.description;
+
+        document.getElementById("rarity").textContent =
+            "⭐ " + data.rarity;
+
+        document.getElementById("rarity").className =
+            "pill rarity-" + data.rarity.toLowerCase();
+
+        document.getElementById("xp").textContent =
+            "⚡ +" + data.xp + " XP";
+
+        loading.style.display = "none";
+        achievement.classList.add("show");
+
+    } catch (error) {
+
+        loading.style.display = "none";
+
+        alert(
+            "Something went wrong. Make sure the Flask server is running."
+        );
+
+        console.error(error);
+    }
+}
+
+
+function getAchievementText() {
+
+    const person =
+        document.getElementById("person").textContent;
+
+    const title =
+        document.getElementById("title").textContent;
+
+    const description =
+        document.getElementById("description").textContent;
+
+    const rarity =
+        document.getElementById("rarity").textContent;
+
+    const xp =
+        document.getElementById("xp").textContent;
+
+    return `
+🏆 USELESS ACHIEVEMENT UNLOCKED
+
+${person}
+
+${title}
+
+${description}
+
+${rarity}
+${xp}
+
+100% useless. 0% regret.
+`;
+}
+
+
+async function copyAchievement() {
+
+    const text = getAchievementText();
+
+    try {
+
+        await navigator.clipboard.writeText(text);
+
+        alert("Achievement copied! 📋");
+
+    } catch {
+
+        alert("Couldn't copy automatically.");
+
+    }
+}
+
+
+async function shareAchievement() {
+
+    const text = getAchievementText();
+
+    if (navigator.share) {
+
+        try {
+
+            await navigator.share({
+                title: "My Useless Achievement",
+                text: text
+            });
+
+        } catch {
+            // User cancelled sharing.
+        }
+
+    } else {
+
+        await copyAchievement();
+
+    }
+}
+
+
+document.getElementById("nameInput")
+    .addEventListener("keydown", function(event) {
+
+        if (event.key === "Enter") {
+            generateAchievement();
+        }
+
+    });
+
+</script>
+
+</body>
+</html>
